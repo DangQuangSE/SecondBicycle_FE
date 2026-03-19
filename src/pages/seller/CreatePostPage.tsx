@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 
 import { bikeService } from "../../services/bike.service";
-import type { CreateBikeFormValues, BikePostDto } from "../../types/bike.types";
+import type { CreateBikeFormValues, BicycleCatalogItemDto } from "../../types/bike.types";
 import ImagePicker from "../../components/features/bikes/ImagePicker";
 import { useAuth } from "../../contexts/AuthContext";
 import { ROUTES } from "../../constants/routes";
@@ -21,7 +21,7 @@ const CreatePostPage: FC = () => {
   const { isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [bikes, setBikes] = useState<BikePostDto[]>([]);
+  const [bikes, setBikes] = useState<BicycleCatalogItemDto[]>([]);
 
   const {
     register,
@@ -35,18 +35,8 @@ const CreatePostPage: FC = () => {
     if (!isAuthenticated) {
       navigate(ROUTES.LOGIN);
     }
-    // Load bikes and deduplicate by modelName for dropdown
-    bikeService.getBikes({ pageSize: 1000 }).then((res) => {
-      const uniqueBikes: BikePostDto[] = [];
-      const seenModels = new Set<string>();
-      res.items.forEach((bike) => {
-        if (bike.modelName && !seenModels.has(bike.modelName)) {
-          seenModels.add(bike.modelName);
-          uniqueBikes.push(bike);
-        }
-      });
-      setBikes(uniqueBikes);
-    }).catch(() => { });
+    // Load bicycle catalog for dropdown via /api/adminbicycles
+    bikeService.getCatalog().then(setBikes).catch(() => { });
   }, [isAuthenticated, navigate]);
 
   const onSubmit = async (data: CreateBikeFormData) => {
@@ -172,7 +162,7 @@ const CreatePostPage: FC = () => {
                 <option value="">Chọn mẫu xe</option>
                 {bikes.map((bike) => (
                   <option key={bike.bikeId} value={bike.bikeId}>
-                    {bike.modelName}
+                    {bike.brandName} - {bike.modelName} ({bike.color} - Khung {bike.frameSize})
                   </option>
                 ))}
               </select>

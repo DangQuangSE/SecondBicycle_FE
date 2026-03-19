@@ -47,7 +47,7 @@ export const API_ENDPOINTS = {
     MY_POSTS: "/bikes/my-posts",
     BRANDS: "/bikes/brands",
     TYPES: "/bikes/types",
-    CATALOG: "/bicycles",
+    CATALOG: "/adminbicycles",
   },
 
   // Wishlist endpoints

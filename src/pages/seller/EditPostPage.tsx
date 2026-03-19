@@ -9,6 +9,7 @@ import type {
   BikePostDto,
   BikeImageDto,
   UpdateBikeFormValues,
+  BicycleCatalogItemDto,
 } from "../../types/bike.types";
 import EditImageManager from "../../components/features/bikes/EditImageManager";
 import { useAuth } from "../../contexts/AuthContext";
@@ -33,7 +34,7 @@ const EditPostPage: FC = () => {
   const [thumbnailMediaId, setThumbnailMediaId] = useState<
     number | undefined
   >();
-  const [bikes, setBikes] = useState<BikePostDto[]>([]);
+  const [bikes, setBikes] = useState<BicycleCatalogItemDto[]>([]);
 
   const {
     register,
@@ -49,18 +50,8 @@ const EditPostPage: FC = () => {
       navigate(ROUTES.LOGIN);
       return;
     }
-    // Load bikes and deduplicate by modelName for dropdown
-    bikeService.getBikes({ pageSize: 1000 }).then((res) => {
-      const uniqueBikes: BikePostDto[] = [];
-      const seenModels = new Set<string>();
-      res.items.forEach((bike) => {
-        if (bike.modelName && !seenModels.has(bike.modelName)) {
-          seenModels.add(bike.modelName);
-          uniqueBikes.push(bike);
-        }
-      });
-      setBikes(uniqueBikes);
-    }).catch(() => { });
+    // Load bicycle catalog for dropdown via /api/adminbicycles
+    bikeService.getCatalog().then(setBikes).catch(() => { });
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
@@ -215,7 +206,7 @@ const EditPostPage: FC = () => {
                 <option value="">Chọn mẫu xe</option>
                 {bikes.map((bike) => (
                   <option key={bike.bikeId} value={bike.bikeId}>
-                    {bike.modelName}
+                    {bike.brandName} - {bike.modelName} ({bike.color} - Khung {bike.frameSize})
                   </option>
                 ))}
               </select>
