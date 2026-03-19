@@ -7,6 +7,16 @@ export interface BikeImageDto {
   isThumbnail?: boolean;
 }
 
+// ===== Bicycle Catalog Item =====
+export interface BicycleCatalogItemDto {
+  bikeId: number;
+  brandName?: string;
+  typeName?: string;
+  modelName: string;
+  color?: string;
+  frameSize?: string;
+}
+
 // ===== Bike Post Response =====
 
 export interface BikePostDto {
@@ -61,18 +71,7 @@ export interface CreateBikeFormValues {
   description?: string;
   price: number;
   address?: string;
-  brandId?: number;
-  typeId?: number;
-  modelName?: string;
-  serialNumber?: string;
-  color?: string;
-  condition?: string;
-  frameSize?: string;
-  frameMaterial?: string;
-  wheelSize?: string;
-  brakeType?: string;
-  weight?: number;
-  transmission?: string;
+  bikeId: number;
   imageFiles: File[];
 }
 

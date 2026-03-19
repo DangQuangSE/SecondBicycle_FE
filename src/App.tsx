@@ -32,6 +32,7 @@ import UserManagementPage from "./pages/admin/UserManagementPage";
 import AbuseManagementPage from "./pages/admin/AbuseManagementPage";
 import CategoryManagementPage from "./pages/admin/CategoryManagementPage";
 import BrandManagementPage from "./pages/admin/BrandManagementPage";
+import BicycleCatalogPage from "./pages/admin/BicycleCatalogPage";
 import InspectorDashboard from "./pages/inspector/InspectorDashboard";
 import PendingInspectionsPage from "./pages/inspector/PendingInspectionsPage";
 import AssignedInspectionsPage from "./pages/inspector/AssignedInspectionsPage";
@@ -244,6 +245,10 @@ function App() {
                   <Route
                     path={ROUTES.ADMIN_BRANDS}
                     element={<BrandManagementPage />}
+                  />
+                  <Route
+                    path={ROUTES.ADMIN_BICYCLES}
+                    element={<BicycleCatalogPage />}
                   />
                   <Route
                     path={ROUTES.ADMIN_ABUSE}

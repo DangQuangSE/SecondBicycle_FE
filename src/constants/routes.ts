@@ -41,6 +41,7 @@ export const ROUTES = {
   ADMIN_LISTINGS: "/admin/listings",
   ADMIN_MODERATION: "/admin/moderation",
   ADMIN_ABUSE: "/admin/abuse",
+  ADMIN_BICYCLES: "/admin/bicycles",
 
   // Buyer abuse reports
   MY_REPORTS: "/my-reports",

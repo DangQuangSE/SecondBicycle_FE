@@ -17,13 +17,6 @@ import {
   createBikeSchema,
   type CreateBikeFormData,
 } from "../../utils/validators";
-import {
-  BIKE_CONDITIONS,
-  FRAME_SIZES,
-  FRAME_MATERIALS,
-  WHEEL_SIZES,
-  BRAKE_TYPES,
-} from "../../constants/bike";
 import "../../components/features/bikes/bikes.css";
 
 const EditPostPage: FC = () => {
@@ -40,8 +33,7 @@ const EditPostPage: FC = () => {
   const [thumbnailMediaId, setThumbnailMediaId] = useState<
     number | undefined
   >();
-  const [brands, setBrands] = useState<string[]>([]);
-  const [types, setTypes] = useState<string[]>([]);
+  const [bikes, setBikes] = useState<BikePostDto[]>([]);
 
   const {
     register,
@@ -57,9 +49,18 @@ const EditPostPage: FC = () => {
       navigate(ROUTES.LOGIN);
       return;
     }
-    // Load brands and categories for dropdowns (public endpoints)
-    bikeService.getBrands().then(setBrands).catch(() => { });
-    bikeService.getTypes().then(setTypes).catch(() => { });
+    // Load bikes and deduplicate by modelName for dropdown
+    bikeService.getBikes({ pageSize: 1000 }).then((res) => {
+      const uniqueBikes: BikePostDto[] = [];
+      const seenModels = new Set<string>();
+      res.items.forEach((bike) => {
+        if (bike.modelName && !seenModels.has(bike.modelName)) {
+          seenModels.add(bike.modelName);
+          uniqueBikes.push(bike);
+        }
+      });
+      setBikes(uniqueBikes);
+    }).catch(() => { });
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
@@ -73,18 +74,7 @@ const EditPostPage: FC = () => {
           description: data.description || "",
           price: data.price ? String(data.price) : "",
           address: data.address || "",
-          brandId: "",
-          typeId: "",
-          modelName: data.modelName || "",
-          serialNumber: data.serialNumber || "",
-          color: data.color || "",
-          condition: data.condition || "",
-          frameSize: data.frameSize || "",
-          frameMaterial: data.frameMaterial || "",
-          wheelSize: data.wheelSize || "",
-          brakeType: data.brakeType || "",
-          weight: data.weight ? String(data.weight) : "",
-          transmission: data.transmission || "",
+          bikeId: data.bikeId ? String(data.bikeId) : "",
         });
         setExistingImages(data.images || []);
       } catch (err) {
@@ -113,18 +103,7 @@ const EditPostPage: FC = () => {
       description: data.description?.trim() || undefined,
       price: Number(data.price),
       address: data.address?.trim() || undefined,
-      brandId: data.brandId ? Number(data.brandId) : undefined,
-      typeId: data.typeId ? Number(data.typeId) : undefined,
-      modelName: data.modelName?.trim() || undefined,
-      serialNumber: data.serialNumber?.trim() || undefined,
-      color: data.color?.trim() || undefined,
-      condition: data.condition || undefined,
-      frameSize: data.frameSize || undefined,
-      frameMaterial: data.frameMaterial || undefined,
-      wheelSize: data.wheelSize || undefined,
-      brakeType: data.brakeType || undefined,
-      weight: data.weight ? Number(data.weight) : undefined,
-      transmission: data.transmission?.trim() || undefined,
+      bikeId: Number(data.bikeId),
       imageFiles: [],
       existingImages,
       newFiles,
@@ -223,175 +202,26 @@ const EditPostPage: FC = () => {
         <div className="form-section">
           <h3>Thông số xe</h3>
           <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="edit-modelName">Model</label>
-              <input
-                id="edit-modelName"
-                type="text"
-                className="form-control"
-                {...register("modelName")}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="edit-serialNumber">Serial Number</label>
-              <input
-                id="edit-serialNumber"
-                type="text"
-                className="form-control"
-                {...register("serialNumber")}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="edit-color">Màu sắc</label>
-              <input
-                id="edit-color"
-                type="text"
-                className="form-control"
-                {...register("color")}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="edit-condition">Tình trạng</label>
+            <div className="form-group full-width">
+              <label htmlFor="edit-bikeId">
+                Mẫu xe <span className="required">*</span>
+              </label>
               <select
-                id="edit-condition"
+                id="edit-bikeId"
                 className="form-control"
-                title="Chọn tình trạng"
-                {...register("condition")}
+                title="Chọn mẫu xe"
+                {...register("bikeId")}
               >
-                <option value="">Chọn tình trạng</option>
-                {BIKE_CONDITIONS.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
+                <option value="">Chọn mẫu xe</option>
+                {bikes.map((bike) => (
+                  <option key={bike.bikeId} value={bike.bikeId}>
+                    {bike.modelName}
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="edit-brandId">Thương hiệu</label>
-              <select
-                id="edit-brandId"
-                className="form-control"
-                title="Chọn thương hiệu"
-                {...register("brandId")}
-              >
-                <option value="">Chọn thương hiệu</option>
-                {brands.map((name, i) => (
-                  <option key={name} value={i + 1}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="edit-typeId">Loại xe</label>
-              <select
-                id="edit-typeId"
-                className="form-control"
-                title="Chọn loại xe"
-                {...register("typeId")}
-              >
-                <option value="">Chọn loại xe</option>
-                {types.map((name, i) => (
-                  <option key={name} value={i + 1}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="edit-frameSize">Size khung</label>
-              <select
-                id="edit-frameSize"
-                className="form-control"
-                title="Chọn size khung"
-                {...register("frameSize")}
-              >
-                <option value="">Chọn size</option>
-                {FRAME_SIZES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="edit-frameMaterial">Chất liệu khung</label>
-              <select
-                id="edit-frameMaterial"
-                className="form-control"
-                title="Chọn chất liệu khung"
-                {...register("frameMaterial")}
-              >
-                <option value="">Chọn chất liệu</option>
-                {FRAME_MATERIALS.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="edit-wheelSize">Cỡ bánh</label>
-              <select
-                id="edit-wheelSize"
-                className="form-control"
-                title="Chọn cỡ bánh"
-                {...register("wheelSize")}
-              >
-                <option value="">Chọn cỡ bánh</option>
-                {WHEEL_SIZES.map((w) => (
-                  <option key={w} value={w}>
-                    {w}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="edit-brakeType">Loại phanh</label>
-              <select
-                id="edit-brakeType"
-                className="form-control"
-                title="Chọn loại phanh"
-                {...register("brakeType")}
-              >
-                <option value="">Chọn loại phanh</option>
-                {BRAKE_TYPES.map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="edit-weight">Trọng lượng (kg)</label>
-              <input
-                id="edit-weight"
-                type="number"
-                className="form-control"
-                step="0.1"
-                min={0}
-                {...register("weight")}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="edit-transmission">Bộ truyền động</label>
-              <input
-                id="edit-transmission"
-                type="text"
-                className="form-control"
-                {...register("transmission")}
-              />
+              {errors.bikeId && (
+                <span className="form-error">{errors.bikeId.message}</span>
+              )}
             </div>
           </div>
         </div>
