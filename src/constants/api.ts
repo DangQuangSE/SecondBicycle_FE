@@ -47,6 +47,7 @@ export const API_ENDPOINTS = {
     MY_POSTS: "/bikes/my-posts",
     BRANDS: "/bikes/brands",
     TYPES: "/bikes/types",
+    CATALOG: "/adminbicycles",
   },
 
   // Wishlist endpoints
@@ -131,6 +132,7 @@ export const API_ENDPOINTS = {
     ABUSE_PENDING: "/admin/abuse/pending",
     ABUSE_REPORTS: "/admin/abuse/reports",
     ABUSE_RESOLVE: "/admin/abuse/resolve",
+    BICYCLES: "/adminbicycles",
   },
 
   // UserManager endpoints (Admin CRUD)

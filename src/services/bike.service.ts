@@ -6,6 +6,7 @@ import type {
   CreateBikeFormValues,
   UpdateBikeFormValues,
   PagedResult,
+  BicycleCatalogItemDto,
 } from "../types/bike.types";
 
 // Re-export types for convenience
@@ -16,6 +17,7 @@ export type {
   CreateBikeFormValues,
   UpdateBikeFormValues,
   PagedResult,
+  BicycleCatalogItemDto,
 } from "../types/bike.types";
 
 // ===== FormData Helpers =====
@@ -24,20 +26,9 @@ export type {
 const appendBikeFields = (fd: FormData, values: CreateBikeFormValues): void => {
   fd.append("Title", values.title);
   fd.append("Price", values.price.toString());
+  fd.append("BikeId", values.bikeId.toString());
   if (values.description) fd.append("Description", values.description);
   if (values.address) fd.append("Address", values.address);
-  if (values.brandId) fd.append("BrandId", values.brandId.toString());
-  if (values.typeId) fd.append("TypeId", values.typeId.toString());
-  if (values.modelName) fd.append("ModelName", values.modelName);
-  if (values.serialNumber) fd.append("SerialNumber", values.serialNumber);
-  if (values.color) fd.append("Color", values.color);
-  if (values.condition) fd.append("Condition", values.condition);
-  if (values.frameSize) fd.append("FrameSize", values.frameSize);
-  if (values.frameMaterial) fd.append("FrameMaterial", values.frameMaterial);
-  if (values.wheelSize) fd.append("WheelSize", values.wheelSize);
-  if (values.brakeType) fd.append("BrakeType", values.brakeType);
-  if (values.weight) fd.append("Weight", values.weight.toString());
-  if (values.transmission) fd.append("Transmission", values.transmission);
 };
 
 const buildCreateFormData = (values: CreateBikeFormValues): FormData => {
@@ -98,6 +89,12 @@ export const bikeService = {
   /** Get types list (public) */
   getTypes: async (): Promise<string[]> => {
     const response = await axiosInstance.get(API_ENDPOINTS.BIKES.TYPES);
+    return response.data;
+  },
+
+  /** Get bicycle catalog list (public) */
+  getCatalog: async (): Promise<BicycleCatalogItemDto[]> => {
+    const response = await axiosInstance.get(API_ENDPOINTS.BIKES.CATALOG);
     return response.data;
   },
 

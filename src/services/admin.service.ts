@@ -52,7 +52,27 @@ export interface ResolveDisputeDto {
   banSeller: boolean;
 }
 
+export interface CreateAdminBicycleDto {
+  brandId: number;
+  typeId: number;
+  modelName: string;
+  serialNumber?: string;
+  color?: string;
+  frameSize?: string;
+  frameMaterial?: string;
+  wheelSize?: string;
+  brakeType?: string;
+  weight?: number;
+  transmission?: string;
+}
+
 export const adminService = {
+  // Create an admin bicycle
+  createAdminBicycle: async (data: CreateAdminBicycleDto): Promise<{ bikeId: number }> => {
+    const response = await axiosInstance.post(API_ENDPOINTS.ADMIN.BICYCLES, data);
+    return response.data;
+  },
+
   // Get dashboard stats
   getDashboard: async (): Promise<DashboardStatsDto> => {
     const response = await axiosInstance.get(API_ENDPOINTS.ADMIN.DASHBOARD);

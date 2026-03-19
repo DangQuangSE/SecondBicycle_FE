@@ -237,6 +237,9 @@ const UserManagementPage: FC = () => {
         <Link to={ROUTES.ADMIN_BRANDS} className="admin-nav-link">
           Quản lý thương hiệu
         </Link>
+        <Link to={ROUTES.ADMIN_BICYCLES} className="admin-nav-link">
+          Quản lý mẫu xe
+        </Link>
         <Link to={ROUTES.ADMIN_ABUSE} className="admin-nav-link">
           Báo cáo vi phạm
         </Link>

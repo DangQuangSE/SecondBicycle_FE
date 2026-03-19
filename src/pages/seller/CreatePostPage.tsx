@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 
 import { bikeService } from "../../services/bike.service";
-import type { CreateBikeFormValues } from "../../types/bike.types";
+import type { CreateBikeFormValues, BicycleCatalogItemDto } from "../../types/bike.types";
 import ImagePicker from "../../components/features/bikes/ImagePicker";
 import { useAuth } from "../../contexts/AuthContext";
 import { ROUTES } from "../../constants/routes";
@@ -13,14 +13,7 @@ import {
   createBikeSchema,
   type CreateBikeFormData,
 } from "../../utils/validators";
-import {
-  BIKE_CONDITIONS,
-  FRAME_SIZES,
-  FRAME_MATERIALS,
-  WHEEL_SIZES,
-  BRAKE_TYPES,
-  MAX_IMAGES,
-} from "../../constants/bike";
+import { MAX_IMAGES } from "../../constants/bike";
 import "../../components/features/bikes/bikes.css";
 
 const CreatePostPage: FC = () => {
@@ -28,8 +21,7 @@ const CreatePostPage: FC = () => {
   const { isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [brands, setBrands] = useState<string[]>([]);
-  const [types, setTypes] = useState<string[]>([]);
+  const [bikes, setBikes] = useState<BicycleCatalogItemDto[]>([]);
 
   const {
     register,
@@ -43,9 +35,8 @@ const CreatePostPage: FC = () => {
     if (!isAuthenticated) {
       navigate(ROUTES.LOGIN);
     }
-    // Load brands and categories for dropdowns (public endpoints)
-    bikeService.getBrands().then(setBrands).catch(() => { });
-    bikeService.getTypes().then(setTypes).catch(() => { });
+    // Load bicycle catalog for dropdown via /api/adminbicycles
+    bikeService.getCatalog().then(setBikes).catch(() => { });
   }, [isAuthenticated, navigate]);
 
   const onSubmit = async (data: CreateBikeFormData) => {
@@ -63,18 +54,7 @@ const CreatePostPage: FC = () => {
       description: data.description?.trim() || undefined,
       price: Number(data.price),
       address: data.address?.trim() || undefined,
-      brandId: data.brandId ? Number(data.brandId) : undefined,
-      typeId: data.typeId ? Number(data.typeId) : undefined,
-      modelName: data.modelName?.trim() || undefined,
-      serialNumber: data.serialNumber?.trim() || undefined,
-      color: data.color?.trim() || undefined,
-      condition: data.condition || undefined,
-      frameSize: data.frameSize || undefined,
-      frameMaterial: data.frameMaterial || undefined,
-      wheelSize: data.wheelSize || undefined,
-      brakeType: data.brakeType || undefined,
-      weight: data.weight ? Number(data.weight) : undefined,
-      transmission: data.transmission?.trim() || undefined,
+      bikeId: Number(data.bikeId),
       imageFiles,
     };
 
@@ -169,180 +149,26 @@ const CreatePostPage: FC = () => {
         <div className="form-section">
           <h3>Thông số xe</h3>
           <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="create-modelName">Model</label>
-              <input
-                id="create-modelName"
-                type="text"
-                className="form-control"
-                placeholder="VD: Escape 3"
-                {...register("modelName")}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="create-serialNumber">Serial Number</label>
-              <input
-                id="create-serialNumber"
-                type="text"
-                className="form-control"
-                placeholder="VD: GNT2024001"
-                {...register("serialNumber")}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="create-color">Màu sắc</label>
-              <input
-                id="create-color"
-                type="text"
-                className="form-control"
-                placeholder="VD: Đen"
-                {...register("color")}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="create-condition">Tình trạng</label>
+            <div className="form-group full-width">
+              <label htmlFor="create-bikeId">
+                Mẫu xe <span className="required">*</span>
+              </label>
               <select
-                id="create-condition"
+                id="create-bikeId"
                 className="form-control"
-                title="Chọn tình trạng"
-                {...register("condition")}
+                title="Chọn mẫu xe"
+                {...register("bikeId")}
               >
-                <option value="">Chọn tình trạng</option>
-                {BIKE_CONDITIONS.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
+                <option value="">Chọn mẫu xe</option>
+                {bikes.map((bike) => (
+                  <option key={bike.bikeId} value={bike.bikeId}>
+                    {bike.brandName} - {bike.modelName} ({bike.color} - Khung {bike.frameSize})
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="create-brandId">Thương hiệu</label>
-              <select
-                id="create-brandId"
-                className="form-control"
-                title="Chọn thương hiệu"
-                {...register("brandId")}
-              >
-                <option value="">Chọn thương hiệu</option>
-                {brands.map((name, i) => (
-                  <option key={name} value={i + 1}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="create-typeId">Loại xe</label>
-              <select
-                id="create-typeId"
-                className="form-control"
-                title="Chọn loại xe"
-                {...register("typeId")}
-              >
-                <option value="">Chọn loại xe</option>
-                {types.map((name, i) => (
-                  <option key={name} value={i + 1}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="create-frameSize">Size khung</label>
-              <select
-                id="create-frameSize"
-                className="form-control"
-                title="Chọn size khung"
-                {...register("frameSize")}
-              >
-                <option value="">Chọn size</option>
-                {FRAME_SIZES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="create-frameMaterial">Chất liệu khung</label>
-              <select
-                id="create-frameMaterial"
-                className="form-control"
-                title="Chọn chất liệu khung"
-                {...register("frameMaterial")}
-              >
-                <option value="">Chọn chất liệu</option>
-                {FRAME_MATERIALS.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="create-wheelSize">Cỡ bánh</label>
-              <select
-                id="create-wheelSize"
-                className="form-control"
-                title="Chọn cỡ bánh"
-                {...register("wheelSize")}
-              >
-                <option value="">Chọn cỡ bánh</option>
-                {WHEEL_SIZES.map((w) => (
-                  <option key={w} value={w}>
-                    {w}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="create-brakeType">Loại phanh</label>
-              <select
-                id="create-brakeType"
-                className="form-control"
-                title="Chọn loại phanh"
-                {...register("brakeType")}
-              >
-                <option value="">Chọn loại phanh</option>
-                {BRAKE_TYPES.map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="create-weight">Trọng lượng (kg)</label>
-              <input
-                id="create-weight"
-                type="number"
-                className="form-control"
-                placeholder="VD: 11.5"
-                step="0.1"
-                min={0}
-                {...register("weight")}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="create-transmission">Bộ truyền động</label>
-              <input
-                id="create-transmission"
-                type="text"
-                className="form-control"
-                placeholder="VD: Shimano Altus 3x8"
-                {...register("transmission")}
-              />
+              {errors.bikeId && (
+                <span className="form-error">{errors.bikeId.message}</span>
+              )}
             </div>
           </div>
         </div>

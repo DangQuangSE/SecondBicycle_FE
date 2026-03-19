@@ -79,18 +79,7 @@ export const createBikeSchema = z.object({
       message: "Giá phải là số lớn hơn 0",
     }),
   address: z.string().max(255, "Địa chỉ tối đa 255 ký tự").optional(),
-  brandId: z.string().optional(),
-  typeId: z.string().optional(),
-  modelName: z.string().optional(),
-  serialNumber: z.string().optional(),
-  color: z.string().optional(),
-  condition: z.string().max(50, "Tình trạng tối đa 50 ký tự").optional(),
-  frameSize: z.string().optional(),
-  frameMaterial: z.string().optional(),
-  wheelSize: z.string().optional(),
-  brakeType: z.string().optional(),
-  weight: z.string().optional(),
-  transmission: z.string().optional(),
+  bikeId: z.string().min(1, "Vui lòng chọn mẫu xe"),
 });
 
 export type CreateBikeFormData = z.infer<typeof createBikeSchema>;
