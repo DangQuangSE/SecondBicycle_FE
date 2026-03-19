@@ -10,16 +10,34 @@ import {
   WHEEL_SIZES,
   BRAKE_TYPES,
 } from "../../constants/bike";
+import type { BicycleCatalogItemDto } from "../../types/bike.types";
 import "./admin.css";
 
 const BicycleCatalogPage: FC = () => {
   const [brands, setBrands] = useState<string[]>([]);
   const [types, setTypes] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [catalog, setCatalog] = useState<BicycleCatalogItemDto[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const fetchCatalog = async () => {
+    try {
+      setIsLoading(true);
+      const data = await bikeService.getCatalog();
+      setCatalog(data);
+    } catch {
+      toast.error("Không thể tải danh sách mẫu xe.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     bikeService.getBrands().then(setBrands).catch(() => {});
     bikeService.getTypes().then(setTypes).catch(() => {});
+    fetchCatalog();
   }, []);
 
   const [formData, setFormData] = useState({
@@ -49,7 +67,7 @@ const BicycleCatalogPage: FC = () => {
     }
 
     try {
-      setIsLoading(true);
+      setIsSubmitting(true);
       const payload: CreateAdminBicycleDto = {
         brandId: Number(formData.brandId),
         typeId: Number(formData.typeId),
@@ -79,12 +97,18 @@ const BicycleCatalogPage: FC = () => {
         weight: "",
         transmission: "",
       });
+      setShowCreateModal(false);
+      fetchCatalog(); // Refresh list after creation
     } catch (error: any) {
       toast.error(error?.message || "Thêm mẫu xe thất bại");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return <div className="loading-container">Đang tải...</div>;
+  }
 
   return (
     <div className="admin-page">
@@ -115,109 +139,165 @@ const BicycleCatalogPage: FC = () => {
         </Link>
       </nav>
 
-      <div className="admin-content">
-        <div style={{ background: "#fff", padding: "2rem", borderRadius: "8px", maxWidth: "800px" }}>
-          <h3>Thêm Mẫu Xe Mới</h3>
-          <form onSubmit={handleSubmit}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-              <div>
-                <label>Thương hiệu *</label>
-                <select name="brandId" value={formData.brandId} onChange={handleChange} style={{ width: "100%", padding: "8px" }} required>
-                  <option value="">Chọn thương hiệu...</option>
-                  {brands.map((name, i) => (
-                    <option key={name} value={i + 1}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+      {/* Action bar */}
+      <div className="admin-filter-bar">
+        <span style={{ flex: 1 }}>
+          Tổng cộng: <strong>{catalog.length}</strong> mẫu xe
+        </span>
+        <button
+          className="btn-admin btn-create"
+          onClick={() => setShowCreateModal(true)}
+        >
+          ➕ Thêm mẫu xe
+        </button>
+      </div>
 
-              <div>
-                <label>Loại xe *</label>
-                <select name="typeId" value={formData.typeId} onChange={handleChange} style={{ width: "100%", padding: "8px" }} required>
-                  <option value="">Chọn loại xe...</option>
-                  {types.map((name, i) => (
-                    <option key={name} value={i + 1}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+      {/* Table */}
+      {catalog.length === 0 ? (
+        <p className="admin-table-empty">Chưa có mẫu xe nào.</p>
+      ) : (
+        <div className="admin-table-container">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Thương hiệu</th>
+                <th>Model</th>
+                <th>Loại xe</th>
+                <th>Màu sắc</th>
+                <th>Size Khung</th>
+              </tr>
+            </thead>
+            <tbody>
+              {catalog.map((bike) => (
+                <tr key={bike.bikeId}>
+                  <td>{bike.bikeId}</td>
+                  <td>{bike.brandName}</td>
+                  <td>{bike.modelName}</td>
+                  <td>{bike.typeName}</td>
+                  <td>{bike.color || "-"}</td>
+                  <td>{bike.frameSize || "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-              <div>
-                <label>Model Name *</label>
-                <input name="modelName" value={formData.modelName} onChange={handleChange} style={{ width: "100%", padding: "8px" }} required placeholder="VD: Giant TCR 2024" />
-              </div>
+      {/* CREATE MODAL */}
+      {showCreateModal && (
+        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="modal-content" style={{ maxWidth: "800px" }} onClick={(e) => e.stopPropagation()}>
+            <h3>Thêm Mẫu Xe Mới</h3>
+            <div className="modal-form">
+              <form id="create-bike-form" onSubmit={handleSubmit}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                  <div className="form-group">
+                    <label>Thương hiệu *</label>
+                    <select name="brandId" value={formData.brandId} onChange={handleChange} className="form-control" required>
+                      <option value="">Chọn thương hiệu...</option>
+                      {brands.map((name, i) => (
+                        <option key={name} value={i + 1}>{name}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label>Serial Number</label>
-                <input name="serialNumber" value={formData.serialNumber} onChange={handleChange} style={{ width: "100%", padding: "8px" }} />
-              </div>
+                  <div className="form-group">
+                    <label>Loại xe *</label>
+                    <select name="typeId" value={formData.typeId} onChange={handleChange} className="form-control" required>
+                      <option value="">Chọn loại xe...</option>
+                      {types.map((name, i) => (
+                        <option key={name} value={i + 1}>{name}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label>Màu sắc</label>
-                <input name="color" value={formData.color} onChange={handleChange} style={{ width: "100%", padding: "8px" }} />
-              </div>
+                  <div className="form-group">
+                    <label>Model Name *</label>
+                    <input name="modelName" value={formData.modelName} onChange={handleChange} className="form-control" required placeholder="VD: Giant TCR 2024" />
+                  </div>
 
-              <div>
-                <label>Size Khung</label>
-                <select name="frameSize" value={formData.frameSize} onChange={handleChange} style={{ width: "100%", padding: "8px" }}>
-                  <option value="">Chọn size...</option>
-                  {FRAME_SIZES.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
+                  <div className="form-group">
+                    <label>Serial Number</label>
+                    <input name="serialNumber" value={formData.serialNumber} onChange={handleChange} className="form-control" />
+                  </div>
 
-              <div>
-                <label>Chất liệu khung</label>
-                <select name="frameMaterial" value={formData.frameMaterial} onChange={handleChange} style={{ width: "100%", padding: "8px" }}>
-                  <option value="">Chọn chất liệu...</option>
-                  {FRAME_MATERIALS.map((m) => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
-              </div>
+                  <div className="form-group">
+                    <label>Màu sắc</label>
+                    <input name="color" value={formData.color} onChange={handleChange} className="form-control" />
+                  </div>
 
-              <div>
-                <label>Cỡ bánh</label>
-                <select name="wheelSize" value={formData.wheelSize} onChange={handleChange} style={{ width: "100%", padding: "8px" }}>
-                  <option value="">Chọn cỡ bánh...</option>
-                  {WHEEL_SIZES.map((w) => (
-                    <option key={w} value={w}>{w}</option>
-                  ))}
-                </select>
-              </div>
+                  <div className="form-group">
+                    <label>Size Khung</label>
+                    <select name="frameSize" value={formData.frameSize} onChange={handleChange} className="form-control">
+                      <option value="">Chọn size...</option>
+                      {FRAME_SIZES.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label>Loại phanh</label>
-                <select name="brakeType" value={formData.brakeType} onChange={handleChange} style={{ width: "100%", padding: "8px" }}>
-                  <option value="">Chọn loại phanh...</option>
-                  {BRAKE_TYPES.map((b) => (
-                    <option key={b} value={b}>{b}</option>
-                  ))}
-                </select>
-              </div>
+                  <div className="form-group">
+                    <label>Chất liệu khung</label>
+                    <select name="frameMaterial" value={formData.frameMaterial} onChange={handleChange} className="form-control">
+                      <option value="">Chọn chất liệu...</option>
+                      {FRAME_MATERIALS.map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label>Trọng lượng (kg)</label>
-                <input name="weight" type="number" step="0.1" value={formData.weight} onChange={handleChange} style={{ width: "100%", padding: "8px" }} />
-              </div>
+                  <div className="form-group">
+                    <label>Cỡ bánh</label>
+                    <select name="wheelSize" value={formData.wheelSize} onChange={handleChange} className="form-control">
+                      <option value="">Chọn cỡ bánh...</option>
+                      {WHEEL_SIZES.map((w) => (
+                        <option key={w} value={w}>{w}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label>Bộ truyền động</label>
-                <input name="transmission" value={formData.transmission} onChange={handleChange} style={{ width: "100%", padding: "8px" }} />
-              </div>
+                  <div className="form-group">
+                    <label>Loại phanh</label>
+                    <select name="brakeType" value={formData.brakeType} onChange={handleChange} className="form-control">
+                      <option value="">Chọn loại phanh...</option>
+                      {BRAKE_TYPES.map((b) => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Trọng lượng (kg)</label>
+                    <input name="weight" type="number" step="0.1" value={formData.weight} onChange={handleChange} className="form-control" />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Bộ truyền động</label>
+                    <input name="transmission" value={formData.transmission} onChange={handleChange} className="form-control" />
+                  </div>
+                </div>
+              </form>
             </div>
-
-            <div style={{ marginTop: "2rem" }}>
-              <button type="submit" disabled={isLoading} style={{ padding: "0.5rem 1rem", background: "#4caf50", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer" }}>
-                {isLoading ? "Đang thêm..." : "Thêm Mẫu Xe"}
+            <div className="modal-actions">
+              <button
+                className="btn-admin btn-cancel"
+                onClick={() => setShowCreateModal(false)}
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                form="create-bike-form"
+                className="btn-admin btn-save"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Đang thêm..." : "Thêm Mẫu Xe"}
               </button>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
